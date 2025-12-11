@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import './Form.css';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Alert, Button } from '@mui/material';
+import { Warning } from '@mui/icons-material';
 
 interface Subdistrict {
   id: number;
@@ -50,105 +52,105 @@ interface Site {
 }
 
 const Form = () => {
-    const [formData, setFormData] = useState<FormData>({
-        website: '',
-        username: '',
-        receiverName: '',
-        houseNo: '',
-        road: '',
-        soi: '',
-        village: '',
-        subdistrict: '',
-        district: 0,
-        province: 0,
-        postcode: '',
-        phone: '',
+  const [formData, setFormData] = useState<FormData>({
+    website: '',
+    username: '',
+    receiverName: '',
+    houseNo: '',
+    road: '',
+    soi: '',
+    village: '',
+    subdistrict: '',
+    district: 0,
+    province: 0,
+    postcode: '',
+    phone: '',
+  });
+
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [allDistricts, setAllDistricts] = useState<District[]>([]);
+  const [allSubdistricts, setAllSubdistricts] = useState<Subdistrict[]>([]);
+  const [site, setSite] = useState<Site | null>(null);
+  const [isInvalidSite, setIsInvalidSite] = useState<boolean>(false);
+
+  useEffect(() => {
+    const path = window.location.pathname.split('/');
+    const siteName = path[path.length - 1];
+
+    fetch('/thaigeo/provinces.json')
+      .then((response) => response.json())
+      .then((data) => setProvinces(data));
+
+    fetch('/thaigeo/district.json')
+      .then((response) => response.json())
+      .then((data) => setAllDistricts(data));
+
+    fetch('/thaigeo/subdistricts.json')
+      .then((response) => response.json())
+      .then((data) => {
+        const mappedData = data.map((sub: any) => ({
+          id: sub.id,
+          provinceCode: Number(sub.provinceCode),
+          districtCode: Number(sub.districtCode),
+          subdistrictCode: Number(sub.subdistrictCode),
+          subdistrictNameEn: sub.subdistrictNameEn,
+          subdistrictNameTh: sub.subdistrictNameTh,
+          postalCode: sub.postalCode,
+        }));
+        setAllSubdistricts(mappedData);
+      });
+    fetch('/site.json')
+      .then((response) => response.json())
+      .then((data) => {
+        const foundSite = data.find((site: Site) => site.name.toLowerCase() === siteName.toLowerCase());
+        if (foundSite) {
+          setSite(foundSite);
+          setIsInvalidSite(false);
+        } else {
+          setSite(null);
+          setIsInvalidSite(true);
+          toast.error('เว็บไซต์ไม่ถูกต้อง กรุณาตรวจสอบ URL', {
+            position: 'top-center',
+            autoClose: 5000,
+          });
+        }
+      });
+  }, []);
+
+  const filteredDistricts = useMemo(() => {
+    if (!formData.province) return [];
+    return allDistricts.filter(
+      (district) => district.provinceCode === formData.province
+    );
+  }, [formData.province, allDistricts]);
+
+  const filteredSubdistricts = useMemo(() => {
+    const { province, district } = formData;
+    if (!province || !district) {
+      return [];
+    }
+
+    return allSubdistricts.filter((subdistrict) => {
+      const isMatch = (
+        subdistrict.districtCode === district
+      );
+
+      return isMatch;
     });
+  }, [formData.province, formData.district, allSubdistricts]);
 
-    const [provinces, setProvinces] = useState<Province[]>([]);
-    const [allDistricts, setAllDistricts] = useState<District[]>([]);
-    const [allSubdistricts, setAllSubdistricts] = useState<Subdistrict[]>([]);
-    const [site, setSite] = useState<Site | null>(null);
-    const [isInvalidSite, setIsInvalidSite] = useState<boolean>(false);
-
-    useEffect(() => {
-        const path = window.location.pathname.split('/');
-        const siteName = path[path.length - 1];
-
-        fetch('/thaigeo/provinces.json')
-            .then((response) => response.json())
-            .then((data) => setProvinces(data));
-
-        fetch('/thaigeo/district.json')
-            .then((response) => response.json())
-            .then((data) => setAllDistricts(data));
-
-        fetch('/thaigeo/subdistricts.json')
-              .then((response) => response.json())
-              .then((data) => {
-                const mappedData = data.map((sub: any) => ({
-                  id: sub.id,
-                  provinceCode: Number(sub.provinceCode),
-                  districtCode: Number(sub.districtCode),
-                  subdistrictCode: Number(sub.subdistrictCode),
-                  subdistrictNameEn: sub.subdistrictNameEn,
-                  subdistrictNameTh: sub.subdistrictNameTh,
-                  postalCode: sub.postalCode,
-                }));
-                setAllSubdistricts(mappedData);
-              });
-        fetch('/site.json')
-            .then((response) => response.json())
-            .then((data) => {
-            const foundSite = data.find((site: Site) => site.name.toLowerCase() === siteName.toLowerCase());
-            if (foundSite) {
-                setSite(foundSite);
-                setIsInvalidSite(false);
-            } else {
-                setSite(null);
-                setIsInvalidSite(true);
-                toast.error('เว็บไซต์ไม่ถูกต้อง กรุณาตรวจสอบ URL', {
-                    position: 'top-center',
-                    autoClose: 5000,
-                });
-            }
-        });
-    }, []);
-
-    const filteredDistricts = useMemo(() => {
-        if (!formData.province) return [];
-        return allDistricts.filter(
-        (district) => district.provinceCode === formData.province
-        );
-    }, [formData.province, allDistricts]);
-
-    const filteredSubdistricts = useMemo(() => {
-        const { province, district } = formData;
-        if (!province || !district) {
-          return [];
-        }
-  
-        return allSubdistricts.filter((subdistrict) => {
-        const isMatch = (
-            subdistrict.districtCode === district
-        );
-        
-        return isMatch;
-        });
-    }, [formData.province, formData.district, allSubdistricts]);
-
-    useEffect(() => {
-        if (formData.subdistrict) {
-        const selectedSubdistrict = allSubdistricts.find(
-            (sub) => sub.subdistrictCode === Number(formData.subdistrict) && 
-                    sub.provinceCode === formData.province &&
-                    sub.districtCode === formData.district
-        );
-        if (selectedSubdistrict) {
-            setFormData(prevData => ({ ...prevData, postcode: selectedSubdistrict.postalCode }));
-        }
-        }
-    }, [formData.subdistrict, formData.province, formData.district, allSubdistricts]);
+  useEffect(() => {
+    if (formData.subdistrict) {
+      const selectedSubdistrict = allSubdistricts.find(
+        (sub) => sub.subdistrictCode === Number(formData.subdistrict) &&
+          sub.provinceCode === formData.province &&
+          sub.districtCode === formData.district
+      );
+      if (selectedSubdistrict) {
+        setFormData(prevData => ({ ...prevData, postcode: selectedSubdistrict.postalCode }));
+      }
+    }
+  }, [formData.subdistrict, formData.province, formData.district, allSubdistricts]);
 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -171,19 +173,19 @@ const Form = () => {
         const nextProvinceCode = updatedData.province;
         const nextDistrictCode = Number(newValue);
       }
-      
+
       if (name === 'province' && value === '') {
-          updatedData.province = 0;
-          updatedData.district = 0;
-          updatedData.subdistrict = '';
-          updatedData.postcode = '';
+        updatedData.province = 0;
+        updatedData.district = 0;
+        updatedData.subdistrict = '';
+        updatedData.postcode = '';
       }
       if (name === 'district' && value === '') {
-          updatedData.district = 0;
-          updatedData.subdistrict = '';
-          updatedData.postcode = '';
+        updatedData.district = 0;
+        updatedData.subdistrict = '';
+        updatedData.postcode = '';
       }
-      
+
       return updatedData;
     });
   };
@@ -215,7 +217,7 @@ const Form = () => {
     //     });
     //     return;
     // }
-
+    return alert(`สิทธิ์การลงทะเบียน กล่องสุ่ม SEAGAME2025 สุดพรีเมียม ได้สิ้นสุดลงแล้ว`);
     const requiredFields = ['username', 'receiverName', 'houseNo', 'district', 'province', 'subdistrict', 'phone'];
     for (let field of requiredFields) {
       if (!formData[field as keyof FormData]) {
@@ -256,14 +258,14 @@ const Form = () => {
       const result = await response.json();
       if (response.status === 200) {
         toast.success('บันทึกสำเร็จ', {
-            position: 'top-center',
-            autoClose: 5000,
-            onClose: () => clearForm(),
+          position: 'top-center',
+          autoClose: 5000,
+          onClose: () => clearForm(),
         });
       } else {
         toast.error(result.error || 'An error occurred', {
-            position: 'top-center',
-            autoClose: 5000,
+          position: 'top-center',
+          autoClose: 5000,
         });
       }
     } catch (error) {
@@ -285,24 +287,28 @@ const Form = () => {
           />
           <h1>กรอกที่อยู่เพื่อรับของรางวัล</h1>
           <p>กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง เพื่อให้จัดส่งของรางวัลไปถึงคุณได้อย่างรวดเร็ว</p>
+          {/* add Warrning or ประกาด Here  */}
+          <Alert sx={{ mt: 2 }} severity="warning" className="announcement">
+            สิทธิ์การลงทะเบียน กล่องสุ่ม SEAGAME2025 สุดพรีเมียม ได้สิ้นสุดลงแล้ว
+          </Alert>
         </div>
 
         <form onSubmit={handleSubmit}>
-            <div className="section-title">1. ข้อมูลเว็บไซต์</div>
-            <div className="form-group">
-                {isInvalidSite ? (
-                    <h1>Invalid site</h1>
-                ) : site ? (
-                    <div className="site-header">
-                        <img src={`/logos/${site.logo}`} alt={site.name} className="site-logo" draggable="false"/>
-                    </div>
-                ) : (
-                     <p>Loading site...</p>
-                )}
-            </div>
-            {/* Account Information */}
-            <div className="section-title">2. ข้อมูลบัญชี</div>
-            <div className="form-grid">
+          <div className="section-title">1. ข้อมูลเว็บไซต์</div>
+          <div className="form-group">
+            {isInvalidSite ? (
+              <h1>Invalid site</h1>
+            ) : site ? (
+              <div className="site-header">
+                <img src={`/logos/${site.logo}`} alt={site.name} className="site-logo" draggable="false" />
+              </div>
+            ) : (
+              <p>Loading site...</p>
+            )}
+          </div>
+          {/* Account Information */}
+          <div className="section-title">2. ข้อมูลบัญชี</div>
+          <div className="form-grid">
             <div className="form-group">
               <label htmlFor="username">ยูสเซอร์ (User) <span className="required">*</span></label>
               <input
@@ -383,18 +389,18 @@ const Form = () => {
               >
                 <option value="">เลือกตำบล / แขวง</option>
                 {filteredSubdistricts.map((subdistrict) => (
-                    <option 
-                        key={subdistrict.subdistrictCode} 
-                        value={String(subdistrict.subdistrictCode)}
-                    >
-                        {subdistrict.subdistrictNameTh} ({subdistrict.subdistrictNameEn})
-                    </option>
+                  <option
+                    key={subdistrict.subdistrictCode}
+                    value={String(subdistrict.subdistrictCode)}
+                  >
+                    {subdistrict.subdistrictNameTh} ({subdistrict.subdistrictNameEn})
+                  </option>
                 ))}
               </select>
             </div>
 
             {/* Other Address Fields */}
-             <div className="form-group">
+            <div className="form-group">
               <label htmlFor="village">3.7 หมู่บ้าน / อาคาร</label>
               <input
                 id="village"
@@ -479,11 +485,30 @@ const Form = () => {
 
           <div className="btn-row">
             <button type="reset" className="btn btn-secondary">ล้างข้อมูล</button>
-            <button type="submit" className="btn btn-primary">ยืนยันส่งที่อยู่</button>
+            <Button
+              type="submit"
+              disabled={true}
+              startIcon={<Warning />}
+              sx={{
+                backgroundColor: '#ccc',
+                color: '#666',
+                borderColor: '#999',
+                pointerEvents: 'none',
+                borderRadius: 3,
+                '&:hover': {
+                  backgroundColor: '#b3b3b3',
+                  borderColor: '#888',
+                  color: '#555',
+                },
+                transition: 'background-color 0.3s, border-color 0.3s, color 0.3s',
+              }}
+            >
+              ยืนยันส่งที่อยู่
+            </Button>
           </div>
         </form>
 
-         <ToastContainer />
+        <ToastContainer />
       </div>
     </div>
   );
