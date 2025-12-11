@@ -288,7 +288,7 @@ const Form = () => {
         </div>
 
         <form onSubmit={handleSubmit}>
-            <div className="section-title">1. ข้อมูลบัญชี</div>
+            <div className="section-title">1. ข้อมูลเว็บไซต์</div>
             <div className="form-group">
                 {isInvalidSite ? (
                     <h1>Invalid site</h1>
