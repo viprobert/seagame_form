@@ -226,7 +226,7 @@ const Form = () => {
 
     const provinceName = provinces.find((province) => province.provinceCode === formData.province)?.provinceNameTh || '';
     const districtName = allDistricts.find((district) => district.districtCode === formData.district)?.districtNameTh || '';
-    const subdistrictName = allSubdistricts.find((subdistrict) => Number(formData.subdistrict))?.subdistrictNameTh || '';
+    const subdistrictName = allSubdistricts.find((subdistrict) => subdistrict.subdistrictCode === Number(formData.subdistrict))?.subdistrictNameTh || '';
 
     const payload = {
       site: site?.name,
