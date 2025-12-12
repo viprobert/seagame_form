@@ -158,8 +158,7 @@ const Form = () => {
   }, [formData.subdistrict, formData.province, formData.district, allSubdistricts]);
 
   const getAvailableSites = async () => {
-    //const response: any = await fetch('https://b-api.thaideal.co/api/prize/prizesite', {
-    const response: any = await fetch('http://localhost:3031/api/prize/prizesite', {
+    const response: any = await fetch('https://b-api.thaideal.co/api/prize/prizesite', {
       method: 'GET',
     }
     )
@@ -268,8 +267,7 @@ const Form = () => {
     };
 
     try {
-      //const response = await fetch('https://b-api.thaideal.co/api/prize', {
-      const response = await fetch('http://localhost:3031/api/prize', {
+      const response = await fetch('https://b-api.thaideal.co/api/prize', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
